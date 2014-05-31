@@ -44,18 +44,32 @@ module Dynamoid
     # Write an object to the adapter. Partition it to a randomly selected key first if necessary.
     #
     # @param [String] table the name of the table to write the object to
-    # @param [Object] object the object itself
+    # @param [Array] objects array of objects to insert, can also be a singular object
     # @param [Hash] options Options that are passed to the put_item call
     #
     # @return [Object] the persisted object
     #
     # @since 0.2.0
-    def write(table, object, options = nil)
-      if Dynamoid::Config.partitioning? && object[:id]
-        object[:id] = "#{object[:id]}.#{Random.rand(Dynamoid::Config.partition_size)}"
-        object[:updated_at] = Time.now.to_f
+    def write(table, objects, options = nil)
+      if objects.respond_to?(:each) && !objects.respond_to?(:keys)
+        if Dynamoid::Config.partitioning?
+          objects.each do |object|
+            if object[:id]
+              object[:id] = "#{object[:id]}.#{Random.rand(Dynamoid::Config.partition_size)}"
+              object[:updated_at] = Time.now.to_f
+            end
+          end
+          batch_put_item({table => objects}, options)
+        else
+          batch_put_item({table => objects}, options)
+        end
+      else
+        if Dynamoid::Config.partitioning? && objects[:id]
+          objects[:id] = "#{objects[:id]}.#{Random.rand(Dynamoid::Config.partition_size)}"
+          objects[:updated_at] = Time.now.to_f
+        end
+        put_item(table, objects, options)
       end
-      put_item(table, object, options)
     end
 
     # Read one or many keys from the selected table. This method intelligently calls batch_get or get on the underlying adapter depending on
@@ -138,7 +152,7 @@ module Dynamoid
       end
     end
 
-    [:batch_get_item, :create_table, :delete_item, :delete_table, :get_item, :list_tables, :put_item].each do |m|
+    [:batch_get_item, :create_table, :delete_item, :delete_table, :get_item, :list_tables, :put_item, :batch_put_item].each do |m|
       # Method delegation with benchmark to the underlying adapter. Faster than relying on method_missing.
       #
       # @since 0.2.0
@@ -182,7 +196,7 @@ module Dynamoid
     #
     # @since 0.2.0
     def result_for_partition(results, table_name)
-      table = Dynamoid::Adapter::AwsSdk.get_table(table_name)
+      table = adapter.get_table(table_name)
       
       if table.range_key     
         range_key_name = table.range_key.name.to_sym
@@ -243,7 +257,7 @@ module Dynamoid
       
       unless Dynamoid::Config.partitioning?
         #no paritioning? just pass to the standard query method
-        Dynamoid::Adapter::AwsSdk.query(table_name, opts)
+        adapter.query(table_name, opts)
       else
         #get all the hash_values that could be possible
         ids = id_with_partitions(opts[:hash_value])
@@ -256,7 +270,7 @@ module Dynamoid
         ids.each do |id|
           modified_options[:hash_value] = id
 
-          query_result = Dynamoid::Adapter::AwsSdk.query(table_name, modified_options)
+          query_result = adapter.query(table_name, modified_options)
           results += query_result.inject([]){|array, result| array += [result]} if query_result.any?
         end 
 
