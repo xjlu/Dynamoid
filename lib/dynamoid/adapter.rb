@@ -196,7 +196,7 @@ module Dynamoid
     #
     # @since 0.2.0
     def result_for_partition(results, table_name)
-      table = adapter.get_table(table_name)
+      table = @adapter.get_table(table_name)
       
       if table.range_key     
         range_key_name = table.range_key.name.to_sym
@@ -257,7 +257,7 @@ module Dynamoid
       
       unless Dynamoid::Config.partitioning?
         #no paritioning? just pass to the standard query method
-        adapter.query(table_name, opts)
+        @adapter.query(table_name, opts)
       else
         #get all the hash_values that could be possible
         ids = id_with_partitions(opts[:hash_value])
