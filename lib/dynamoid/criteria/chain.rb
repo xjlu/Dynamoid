@@ -188,8 +188,9 @@ module Dynamoid #:nodoc:
       # @return [Set] a Set containing the IDs from the index.
       def ids_from_index
         if index.range_key?
-          Dynamoid::Adapter.query(index.table_name, index_query.merge(consistent_opts)).inject(Set.new) do |all, record|
-            all + Set.new(record[:ids])
+          query_options = index_query.merge(consistent_opts).merge({:select => ["ids"]})
+          Dynamoid::Adapter.query(index.table_name, query_options).inject(Set.new) do |all, record|
+            all.merge Set.new(record[:ids])
           end
         else
           results = Dynamoid::Adapter.read(index.table_name, index_query[:hash_value], consistent_opts)
