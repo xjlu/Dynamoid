@@ -156,10 +156,10 @@ module Dynamoid
     # @since 0.2.0
     def save(options = {})
       self.class.create_table
-      
+
       if new_record?
-        conditions = { :unless_exists => [self.class.hash_key]}
-        conditions[:unless_exists] << range_key if(range_key)
+        conditions = { :unless_exists => [self.class.hash_key] }
+        conditions[:unless_exists] << range_key if (range_key)
 
         run_callbacks(:create) { persist(conditions) }
       else
@@ -178,9 +178,13 @@ module Dynamoid
       run_callbacks(:update) do
         options = range_key ? {:range_key => dump_field(self.read_attribute(range_key), self.class.attributes[range_key])} : {}
         new_attrs = Dynamoid::Adapter.update_item(self.class.table_name, self.hash_key, options.merge(:conditions => conditions)) do |t|
-          if(self.class.attributes[:lock_version])
+          if self.class.attributes[:lock_version]
             raise "Optimistic locking cannot be used with Partitioning" if(Dynamoid::Config.partitioning)
             t.add(lock_version: 1)
+          end
+
+          if self.class.attributes[:updated_at]
+            t.set(updated_at: Time.now.to_f)
           end
 
           yield t
