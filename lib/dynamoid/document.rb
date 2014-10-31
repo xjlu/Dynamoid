@@ -130,7 +130,9 @@ module Dynamoid #:nodoc:
     end
 
     def load(attrs)
-      self.class.undump(attrs).each {|key, value| send "#{key}=", value }
+      self.class.undump(attrs).each do |key, value|
+        send "#{key}=", value if self.class.attributes.has_key?(attr)
+      end
     end
 
     # An object is equal to another object if their ids are equal.
