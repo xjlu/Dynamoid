@@ -131,7 +131,9 @@ module Dynamoid #:nodoc:
 
     def load(attrs)
       self.class.undump(attrs).each do |key, value|
-        send "#{key}=", value if self.class.attributes.has_key?(key)
+        m_name = "#{key}="
+        send m_name, value if self.respond_to? m_name
+        # send m_name, value if self.class.attributes.include? key
       end
     end
 

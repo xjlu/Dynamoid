@@ -33,13 +33,26 @@ describe "Dynamoid::Document" do
     @address.attributes.should == {:id=>nil, :created_at=>nil, :updated_at=>nil, :city=>"Chicago", :options=>nil, :deliverable => nil, :lock_version => nil}
   end
 
-  it 'allows interception of write_attribute on load' do
-    class Model
-      include Dynamoid::Document
-      field :city
-      def city=(value); self[:city] = value.downcase; end
+  context "interception of attribute methods" do
+    before do
+      class Model
+        include Dynamoid::Document
+        field :password_digest
+        field :city
+
+        def city=(value); self[:city] = value.downcase unless value.nil?; end
+
+        def password=(value); self.password_digest = value.split(//).sort.join; end
+      end
     end
-    Model.new(:city => "Chicago").city.should == "chicago"
+
+    it 'allows interception of write_attribute on load' do
+      Model.new(:city => "Chicago").city.should == "chicago"
+    end
+
+    it 'allows loading one write method to define another defined attribute on load' do
+      Model.new(:password => "awssdk").password_digest.should == "adkssw"
+    end
   end
 
   it 'creates a new document' do
