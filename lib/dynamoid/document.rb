@@ -133,7 +133,6 @@ module Dynamoid #:nodoc:
       self.class.undump(attrs).each do |key, value|
         m_name = "#{key}="
         send m_name, value if self.respond_to? m_name
-        # send m_name, value if self.class.attributes.include? key
       end
     end
 

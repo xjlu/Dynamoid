@@ -68,7 +68,7 @@ module Dynamoid
           self.attributes.each do |attribute, options|
             hash[attribute] = undump_field(incoming[attribute], options)
           end
-          incoming.each {|attribute, value| hash[attribute] = value unless hash.has_key? attribute }
+          incoming.each { |attribute, value| hash[attribute] = value unless hash.has_key? attribute }
         end
       end
 
