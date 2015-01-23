@@ -112,7 +112,6 @@ module Dynamoid
       #
       # @since 0.2.0
       def create_table(table_name, key = :id, options = {})
-        puts "Creating #{table_name} table. This could take a while."
         Dynamoid.logger.info "Creating #{table_name} table. This could take a while."
         read_capacity = options.delete(:read_capacity) || Dynamoid::Config.read_capacity
         write_capacity = options.delete(:write_capacity) || Dynamoid::Config.write_capacity
@@ -302,6 +301,17 @@ module Dynamoid
         opts.delete(:consistent_read)
         opts.delete(:scan_index_forward)
         opts.delete(:limit)
+        if opts[:select]
+          if opts[:select].is_a?(Array)
+            q[:attributes_to_get] = opts.delete(:select)
+          else
+            select_option = opts.delete(:select)
+            q[:select] = case select_option
+            when :all
+              'ALL_ATTRIBUTES'
+            end
+          end
+        end
         opts.delete(:next_token).tap do |token|
           break unless token
           q[:exclusive_start_key] = {
@@ -331,7 +341,7 @@ module Dynamoid
         q[:table_name]     = table_name
         q[:key_conditions] = key_conditions
 
-        raise "MOAR STUFF" unless opts.empty?
+        raise "MORE STUFF" unless opts.empty?
         Enumerator.new { |y|
           result = client.query(q)
           result.member.each { |r| 
