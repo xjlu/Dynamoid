@@ -238,9 +238,11 @@ module Dynamoid #:nodoc:
         {}.tap do |hash|
           hash[:hash_value] = values[:hash_value]
           if index.range_key?
-            key = query.keys.find{|k| k.to_s.include?('.')}
-            if key
-              hash.merge!(range_hash(key))
+            keys = query.keys.select{|k| k.to_s.include?('.')}
+            if keys
+              keys.each do |key|
+                hash.merge!(range_hash(key))
+              end
             else
               raise Dynamoid::Errors::MissingRangeKey, 'This index requires a range key'
             end
@@ -285,7 +287,7 @@ module Dynamoid #:nodoc:
       end
 
       def query_keys
-        query.keys.collect{|k| k.to_s.split('.').first}
+        query.keys.collect { |k| k.to_s.split('.').first }
       end
 
       # Use range query only when [hash_key] or [hash_key, range_key] is specified in query keys.
@@ -295,7 +297,7 @@ module Dynamoid #:nodoc:
       end
 
       def start_key
- 	      hash_key_type = @start.class.attributes[@start.class.hash_key][:type] == :string ? 'S' : 'N'
+        hash_key_type = @start.class.attributes[@start.class.hash_key][:type] == :string ? 'S' : 'N'
         key = { :hash_key_element => { hash_key_type => @start.hash_key.to_s } }
         if range_key = @start.class.range_key
           range_key_type = @start.class.attributes[range_key][:type] == :string ? 'S' : 'N'

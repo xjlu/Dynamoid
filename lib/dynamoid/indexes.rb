@@ -32,7 +32,7 @@ module Dynamoid #:nodoc:
       #
       # @since 0.2.0
       def find_index(index)
-        self.indexes[Array(index).collect(&:to_s).sort.collect(&:to_sym)]
+        self.indexes[Array(index).collect(&:to_s).uniq.sort.collect(&:to_sym)]
       end
       
       # Helper function to create indexes (if they don't exist already).

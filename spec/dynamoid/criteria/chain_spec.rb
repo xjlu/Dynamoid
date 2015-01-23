@@ -30,6 +30,12 @@ describe "Dynamoid::Associations::Chain" do
 
     @chain.query = {:name => 'Josh', "created_at.lt" => @time - 1.day}
     @chain.send(:index).should == User.indexes[[:created_at, :name]]
+
+    @chain.query = {:name => 'Josh', "created_at.lt" => @time - 1.day, "created_at.gt" => @time - 10.days}
+    @chain.send(:index).should == User.indexes[[:created_at, :name]]
+
+    @chain.query = {:name => 'Josh', "created_at" => (@time - 10.days)..(@time - 1.day)}
+    @chain.send(:index).should == User.indexes[[:created_at, :name]]
   end
 
   it 'does not find an index if there is not an appropriate one' do
@@ -52,6 +58,9 @@ describe "Dynamoid::Associations::Chain" do
 
     @chain.query = {:name => 'Josh', 'created_at.gt' => @time}
     @chain.send(:index_query).should == {:hash_value => 'Josh', :range_greater_than => @time.to_f}
+
+    @chain.query = {:name => 'Josh', 'created_at.gt' => @time, 'created_at.lt' => @time}
+    @chain.send(:index_query).should == {:hash_value => 'Josh', :range_greater_than => @time.to_f, :range_less_than => @time.to_f}
   end
 
   it 'finds records with an index' do
@@ -165,7 +174,7 @@ describe "Dynamoid::Associations::Chain" do
       @chain.send(:records_with_range).to_a.should == [@tweet3]
     end
   end
-  
+
   context 'destroy alls' do
     before do
       @tweet1 = Tweet.create(:tweet_id => "x", :group => "one")
@@ -173,7 +182,7 @@ describe "Dynamoid::Associations::Chain" do
       @tweet3 = Tweet.create(:tweet_id => "xx", :group => "two")
       @chain = Dynamoid::Criteria::Chain.new(Tweet)
     end
-    
+
     it 'destroys tweet with a range simple range query' do
       @chain.query = { :tweet_id => "x" }
       @chain.all.size.should == 2
