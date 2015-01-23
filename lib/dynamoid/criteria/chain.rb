@@ -238,11 +238,9 @@ module Dynamoid #:nodoc:
         {}.tap do |hash|
           hash[:hash_value] = values[:hash_value]
           if index.range_key?
-            keys = query.keys.select{|k| k.to_s.include?('.')}
-            if keys
-              keys.each do |key|
-                hash.merge!(range_hash(key))
-              end
+            key = query.keys.find{|k| k.to_s.include?('.')}
+            if key
+              hash.merge!(range_hash(key))
             else
               raise Dynamoid::Errors::MissingRangeKey, 'This index requires a range key'
             end

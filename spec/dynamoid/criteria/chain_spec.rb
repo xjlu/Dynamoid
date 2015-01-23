@@ -56,8 +56,10 @@ describe "Dynamoid::Associations::Chain" do
     @chain.query = {:name => 'Josh', 'created_at.gt' => @time}
     @chain.send(:index_query).should == {:hash_value => 'Josh', :range_greater_than => @time.to_f}
 
-    @chain.query = {:name => 'Josh', 'created_at.gt' => @time, 'created_at.lt' => @time}
-    @chain.send(:index_query).should == {:hash_value => 'Josh', :range_greater_than => @time.to_f, :range_less_than => @time.to_f}
+    starttime = (@time - 10.days)
+    endtime = (@time - 1.day)
+    @chain.query = {:name => 'Josh', "created_at.btn" => starttime..endtime}
+    @chain.send(:index_query).should == {:hash_value => 'Josh', :range_value => starttime..endtime}
   end
 
   it 'finds records with an index' do
