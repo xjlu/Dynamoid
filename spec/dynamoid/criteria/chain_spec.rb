@@ -31,9 +31,6 @@ describe "Dynamoid::Associations::Chain" do
     @chain.query = {:name => 'Josh', "created_at.lt" => @time - 1.day}
     @chain.send(:index).should == User.indexes[[:created_at, :name]]
 
-    @chain.query = {:name => 'Josh', "created_at.lt" => @time - 1.day, "created_at.gt" => @time - 10.days}
-    @chain.send(:index).should == User.indexes[[:created_at, :name]]
-
     @chain.query = {:name => 'Josh', "created_at" => (@time - 10.days)..(@time - 1.day)}
     @chain.send(:index).should == User.indexes[[:created_at, :name]]
   end

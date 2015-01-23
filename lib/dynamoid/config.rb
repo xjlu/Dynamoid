@@ -11,7 +11,7 @@ module Dynamoid
     include ActiveModel::Observing if defined?(ActiveModel::Observing)
 
     # All the default options.
-    option :adapter, :default => 'aws-sdk'
+    option :adapter, :default => 'aws_sdk'
     option :namespace, :default => defined?(Rails) ? "dynamoid_#{Rails.application.class.parent_name}_#{Rails.env}" : "dynamoid"
     option :logger, :default => defined?(Rails)
     option :access_key
